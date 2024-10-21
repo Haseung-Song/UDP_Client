@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace UDP_Client
@@ -30,17 +29,20 @@ namespace UDP_Client
                         message[0] = 0xAF; // Header: Frame Sync (첫 바이트)
                         message[1] = 0x01; // Header: Destination Address (목적지 주소)
                         message[2] = 0x0A; // Header: Source Address (출발지 주소)
+
                         byte cmdCounter = 0x00;
                         message[3] = cmdCounter; // CMD Counter: [0x00 ~ 0xFF]
-                                                 // (CMD Counter + 1)시키고, 0xFF 이후에는 다시 0으로 돌아감
+                        // (CMD Counter + 1)시키고, 0xFF 이후에는 다시 0으로 돌아감
                         cmdCounter = (byte)((cmdCounter + 1) % 256);  // 0~255 순환
+
                         if (i >= 0 && i < 5)
                         {
                             message[4] = (byte)(cmdCounter | 0x80); // 7번째 비트를 1로 설정
                         }
+
                         if (i >= 5 && i < 10)
                         {
-                            message[4] = (byte)(cmdCounter | 0x7F); // 7번째 비트를 0으로 설정
+                            message[4] = (byte)(cmdCounter & 0x7F); // 7번째 비트를 0으로 설정
                         }
                         await udpClient.SendAsync(message, message.Length);
                         await Task.Delay(500);
