@@ -14,13 +14,20 @@ namespace UDP_Client
             try
             {
                 Console.WriteLine("UDP Client Started!");
+                byte cmdCounter = 0x00; // CMD Counter 초기값
                 if (udpClient == null)
                 {
                     udpClient = new UdpClient();
                 }
-                byte cmdCounter = 0x00; // CMD Counter 초기값
-                int angleFlap = -40; // FlapAngle 초기화
-                int angleTilt = 0; // TiltAngle 초기화
+                int angleFlap = -40;
+                int angleTilt = 0;
+                int knobSpeed = 0;
+                int knobAltitude = 0;
+                int knobHeading = 0;
+                int stickThrottle = 0;
+                int stickRoll = -100;
+                int stickPitch = -100;
+                int stickYaw = -100;
                 while (true)
                 {
                     for (int j = 0; j <= 80; j++) // 80번 루프 (테스트 반복)
@@ -60,23 +67,81 @@ namespace UDP_Client
                         // TiltAngle  (6~0번째 비트 설정)
                         message[6] = (byte)(message[6] | angleTilt);
 
+                        message[7] = (byte)(knobSpeed);          // KnobSpeed    (8 바이트 설정)
+                        message[8] = (byte)(knobAltitude / 15);  // knobAltitude (9 바이트 설정)
+                        message[9] = (byte)(knobHeading / 2);    // knobHeading (10 바이트 설정)
+
+                        message[10] = (byte)(stickThrottle);     // StickThrottle (11 바이트 설정)
+
+                        // 정수 값을 0.01 단위로 변환 ([-1 ~ 1] 범위 변환) (StickRoll)
+                        double stickRollToDouble = stickRoll * 0.01;
+                        // [-1 ~ 1] => [0X00 ~ 0XC8] 변환
+                        int rollStick = (int)((stickRollToDouble + 1) * 100);
+                        message[11] = (byte)(rollStick);         // StickRoll     (12 바이트 설정)
+
+                        // 정수 값을 0.01 단위로 변환 ([-1 ~ 1] 범위 변환) (StickPitch)
+                        double stickPitchToDouble = stickPitch * 0.01;
+                        // [-1 ~ 1] => [0X00 ~ 0XC8] 변환
+                        int pitchStick = (int)((stickPitchToDouble + 1) * 100);
+                        message[12] = (byte)(pitchStick);
+
+                        // 정수 값을 0.01 단위로 변환 ([-1 ~ 1] 범위 변환) (StickYaw)
+                        double stickYawToDouble = stickYaw * 0.01;
+                        // [-1 ~ 1] => [0X00 ~ 0XC8] 변환
+                        int yawStick = (int)((stickYawToDouble + 1) * 100);
+                        message[13] = (byte)(yawStick);
+
                         await udpClient.SendAsync(message, message.Length); // 메시지 전송
-                        await Task.Delay(500); // 메시지 전송 후 0.5초 지연
+                        await Task.Delay(100); // 메시지 전송 후 0.1초 지연
 
                         // CMD Counter 증가 및 0xFF ,후 0으로 돌아감
                         cmdCounter = (byte)((cmdCounter + 1) % 256);
 
                         // 각도 2만큼 증가
                         angleFlap += 2;
-
                         // [-40도 ~ 40도] 순환
                         if (angleFlap > 40) angleFlap = -40;
 
                         // 각도 1만큼 증가
                         angleTilt += 1;
-
                         // [0도 ~ 90도] 순환
                         if (angleTilt > 90) angleTilt = 0;
+
+                        // 속도(km/h) 1만큼 증가
+                        knobSpeed += 1;
+                        // [0km/h ~ 250km/h] 순환
+                        if (knobSpeed > 250) knobSpeed = 0;
+
+                        // 고도(m) 15만큼 증가
+                        knobAltitude += 15;
+                        // [0m ~ 3000m] 순환
+                        if (knobAltitude > 3000) knobAltitude = 0;
+
+                        // 각도 2만큼 증가
+                        knobHeading += 2;
+                        // [0도 ~ 358도] 순환
+                        if (knobHeading > 358) knobHeading = 0;
+
+                        // 고도 1만큼 증가
+                        stickThrottle += 1;
+                        double stickThrottleToDouble = stickThrottle * 0.005;
+                        // [0 ~ 1] 순환
+                        if (stickThrottleToDouble > 1) stickThrottle = 0;
+
+                        // 속도 1만큼 증가
+                        stickRoll += 1;
+                        // [-100 ~ 100] 순환
+                        if (stickRoll > 100) stickRoll = -100;
+
+                        // 속도 1만큼 증가
+                        stickPitch += 1;
+                        // [-100 ~ 100] 순환
+                        if (stickPitch > 100) stickPitch = -100;
+
+                        // 속도 1만큼 증가
+                        stickYaw += 1;
+                        // [-100 ~ 100] 순환
+                        if (stickYaw > 100) stickYaw = -100;
                     }
 
                 }
