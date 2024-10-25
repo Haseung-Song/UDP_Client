@@ -11,7 +11,6 @@ namespace UDP_Client
         {
             UdpClient udpClient = new UdpClient();
             udpClient.Connect("127.0.0.1", 20000);
-
             try
             {
                 Console.WriteLine("UDP Client Started!");
@@ -45,20 +44,16 @@ namespace UDP_Client
                         // 짝수일 때  (= ON)
                         if (j % 2 == 0)
                         {
-                            message[4] = (byte)(message[4] | 0x80);   // 7번째 비트를 1로 설정  (Byte #5.)
-                            message[5] = (byte)(message[5] | 0x80);   // 7번째 비트를 1로 설정  (Byte #6.)
-                            message[6] = (byte)(message[6] | 0x80);   // 7번째 비트를 1로 설정  (Byte #7.)
-                            message[24] = (byte)(message[24] | 0x80); // 7번째 비트를 1로 설정 (Byte #25.)
-                            message[24] = (byte)(message[24] | 0x01); // 0번째 비트를 1로 설정 (Byte #25.)
+                            message[4] = (byte)(message[4] | 0x80);    // 7번째 비트를 1로 설정 (Byte #5.)
+                            message[5] = (byte)(message[5] | 0x80);    // 7번째 비트를 1로 설정 (Byte #6.)
+                            message[6] = (byte)(message[6] | 0x80);    // 7번째 비트를 1로 설정 (Byte #7.)
                         }
                         // 홀수일 때 (= OFF)
                         else
                         {
-                            message[4] = (byte)(message[4] & 0x7F);    // 7번째 비트를 0으로 설정  (Byte #5.)
-                            message[5] = (byte)(message[5] & 0x7F);    // 7번째 비트를 0으로 설정  (Byte #6.)
-                            message[6] = (byte)(message[6] & 0x7F);    // 7번째 비트를 0으로 설정  (Byte #7.)
-                            message[24] = (byte)(message[24] & ~0x80); // 7번째 비트를 0으로 설정 (Byte #25.)
-                            message[24] = (byte)(message[24] & ~0x01); // 0번째 비트를 0으로 설정 (Byte #25.)
+                            message[4] = (byte)(message[4] & 0x7F);    // 7번째 비트를 0으로 설정 (Byte #5.)
+                            message[5] = (byte)(message[5] & 0x7F);    // 7번째 비트를 0으로 설정 (Byte #6.)
+                            message[6] = (byte)(message[6] & 0x7F);    // 7번째 비트를 0으로 설정 (Byte #7.)
                         }
 
                         // [FlightMode]는 [0, 1, 2, 3]까지 순환
@@ -89,9 +84,19 @@ namespace UDP_Client
                         byte[] altOfLPBytes = BitConverter.GetBytes(altOfLP); // 고도값을 2 바이트로 변환
                         Array.Copy(altOfLPBytes, 0, message, 23, 2);  // message[23] ~ message[24]에 복사 [Byte #23. ~ Byte #24.]  = [2 Byte]
 
-                        await udpClient.SendAsync(message, message.Length); // 메시지 송신 (Client => Server)
+                        if (j % 2 == 0)
+                        {
+                            message[24] = (byte)(message[24] | 0x80);  // 7번째 비트를 1로 설정   (Byte #25.)
+                            message[24] = (byte)(message[24] | 0x01);  // 0번째 비트를 1로 설정   (Byte #25.)
+                        }
+                        else
+                        {
+                            message[24] = (byte)(message[24] & 0x7F);  // 7번째 비트를 0으로 설정 (Byte #25.)
+                            message[24] = (byte)(message[24] & 0xFE);  // 0번째 비트를 0으로 설정 (Byte #25.)
+                        }
 
-                        await Task.Delay(200); // 메시지 송신 후, 0.2초 지연
+                        await udpClient.SendAsync(message, message.Length); // 메시지 송신 (Client => Server)
+                        await Task.Delay(100); // 메시지 송신 후, 0.1초 지연
 
                         cmdCounter = (byte)((cmdCounter + 1) % 256); // CMD Counter 값 [0 ~ 255] 순환
 
