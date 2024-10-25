@@ -37,8 +37,8 @@ namespace UDP_Client
                     {
                         byte[] message = new byte[32]; // message 바이트 수: (0 Byte ~ 32 Byte)
                         message[0] = 0xAF;             // Header: Frame Sync (첫 번째 바이트)
-                        message[1] = 0x01;             // Header: Destination Address (목적지 주소)
-                        message[2] = 0x0A;             // Header: Source Address (출발지 주소)
+                        message[1] = 0x0A;             // Header: Destination Address (목적지 주소)
+                        message[2] = 0x01;             // Header: Source Address (출발지 주소)
                         message[3] = cmdCounter;       // CMD Counter: [0x00 ~ 0xFF]
 
                         // 짝수일 때  (= ON)
@@ -95,8 +95,18 @@ namespace UDP_Client
                             message[24] = (byte)(message[24] & 0xFE);  // 0번째 비트를 0으로 설정 (Byte #25.)
                         }
 
+                        // [# CRC 계산]
+                        byte[] crcData = new byte[26]; // [Byte #5.~ Byte #30.]
+                        Array.Copy(message, 4, crcData, 0, 26);
+                        // [Crc16ccitt] 계산 값
+                        ushort calculatedCrc = Crc16_ccitt.Crc16ccitt(ref crcData, (uint)crcData.Length);
+
+                        // CRC 값을 메시지의 31, 32 바이트에 저장
+                        message[30] = (byte)((calculatedCrc >> 8) & 0xFF);  // 상위 8비트 (Byte #31.)
+                        message[31] = (byte)(calculatedCrc & 0xFF);         // 하위 8비트 (Byte #32.)
+
                         await udpClient.SendAsync(message, message.Length); // 메시지 송신 (Client => Server)
-                        await Task.Delay(50); // 메시지 송신 후, 0.1초 지연
+                        await Task.Delay(100); // 메시지 송신 후, 0.1초 지연
 
                         cmdCounter = (byte)((cmdCounter + 1) % 256); // CMD Counter 값 [0 ~ 255] 순환
 
@@ -149,19 +159,19 @@ namespace UDP_Client
                         lonOfLP += 1;
                         // [0 ~ 3600000000] 순환
                         if (lonOfLP > 3600000000) lonOfLP = 0;
-                        //Console.WriteLine($"LonOfLP: {lonOfLP}, 고도(m): {(lonOfLP * 0.0000001) - 180.0}°(도)");
+                        Console.WriteLine($"LonOfLP: {lonOfLP}, 고도(m): {(lonOfLP * 0.0000001) - 180.0}°(도)");
 
                         // 위도 1만큼 증가
                         latOfLP += 1;
                         // [0 ~ 1800000000] 순환
                         if (latOfLP > 1800000000) latOfLP = 0;
-                        //Console.WriteLine($"LatOfLP: {latOfLP}, 고도(m): {(latOfLP * 0.0000001) - 90.0}°(도)");
+                        Console.WriteLine($"LatOfLP: {latOfLP}, 고도(m): {(latOfLP * 0.0000001) - 90.0}°(도)");
 
                         // 고도 1만큼 증가
                         altOfLP += 1;
                         // [0 ~ 60000] 순환
                         if (altOfLP > 60000) altOfLP = 0;
-                        //Console.WriteLine($"AltOfLP: {altOfLP}, 고도(m): {(altOfLP * 0.025) - 500.0} m");
+                        Console.WriteLine($"AltOfLP: {altOfLP}, 고도(m): {(altOfLP * 0.025) - 500.0} m");
                     }
 
                 }
