@@ -76,13 +76,13 @@ namespace UDP_Client
                         message[13] = (byte)(stickYaw);          // StickYaw       (Byte #14.)
 
                         byte[] lonOfLPBytes = BitConverter.GetBytes(lonOfLP); // 경도값을 4 바이트로 변환
-                        Array.Copy(lonOfLPBytes, 0, message, 14, 4);  // message[14] ~ message[17]에 복사 [Byte #15. ~ Byte #18.]  = [4 Byte]
+                        Array.Copy(lonOfLPBytes, 0, message, 14, 4);  // message[15] ~ message[18]에 복사 [Byte #15. ~ Byte #18.]  = [4 Byte]
 
                         byte[] latOfLPBytes = BitConverter.GetBytes(latOfLP); // 위도값을 4 바이트로 변환
-                        Array.Copy(latOfLPBytes, 0, message, 18, 4);  // message[18] ~ message[22]에 복사 [Byte #19. ~ Byte #22.]  = [4 Byte]
+                        Array.Copy(latOfLPBytes, 0, message, 18, 4);  // message[19] ~ message[22]에 복사 [Byte #19. ~ Byte #22.]  = [4 Byte]
 
                         byte[] altOfLPBytes = BitConverter.GetBytes(altOfLP); // 고도값을 2 바이트로 변환
-                        Array.Copy(altOfLPBytes, 0, message, 23, 2);  // message[23] ~ message[24]에 복사 [Byte #23. ~ Byte #24.]  = [2 Byte]
+                        Array.Copy(altOfLPBytes, 0, message, 22, 2);  // message[23] ~ message[24]에 복사 [Byte #23. ~ Byte #24.]  = [2 Byte]
 
                         if (j % 2 == 0)
                         {
@@ -96,7 +96,7 @@ namespace UDP_Client
                         }
 
                         await udpClient.SendAsync(message, message.Length); // 메시지 송신 (Client => Server)
-                        await Task.Delay(100); // 메시지 송신 후, 0.1초 지연
+                        await Task.Delay(50); // 메시지 송신 후, 0.1초 지연
 
                         cmdCounter = (byte)((cmdCounter + 1) % 256); // CMD Counter 값 [0 ~ 255] 순환
 
